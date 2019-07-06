@@ -9,7 +9,7 @@ from param import Param
  
 #import os.path
 import os
-from sensor_msgs.msg import Image
+#from sensor_msgs.msg import Image
 
 class Learner:
     def __init__(self, SESS):

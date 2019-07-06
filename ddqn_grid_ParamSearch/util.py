@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import numpy as np
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
+#from cv_bridge import CvBridge
+#from sensor_msgs.msg import Image
 from param import Param
 
 import random
 import h5py
 #import rospy
 import os
-import cv2
+#import cv2
 ###############################################################################
 
 class ReplayDataset(object):

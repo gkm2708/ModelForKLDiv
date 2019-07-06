@@ -14,6 +14,11 @@ class Param:
         self.RANDOM_BALL = False
         self.GRID_SIZE = 7
 
+
+        """ SENSORY PARAMS """
+        self.FRAME_SKIP = 3
+        self.GYRO_DIM = 2
+
         """ ALL INPUT PARAMS """
         self.IMAGE_DIM = 84
 
@@ -24,9 +29,6 @@ class Param:
             self.STATE_SIZE = [self.GRID_SIZE*self.GRID_SIZE*5 + self.GYRO_DIM]                      # Our input is a stack of 4 frames hence 84x84x4 (Width, height, channels) 
             self.STATE_SHAPE = np.zeros((self.GRID_SIZE*self.GRID_SIZE*5 + self.GYRO_DIM), dtype=np.float32)
 
-        """ SENSORY PARAMS """
-        self.FRAME_SKIP = 3
-        self.GYRO_DIM = 2
 
         """ ROLLOUT PARAMS """
         self.MAX_STEPS = 20                             # maximum time step in one episode
