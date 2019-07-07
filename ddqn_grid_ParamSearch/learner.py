@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 import random
 import tensorflow as tf
-from util import ReplayDataset
 import numpy as np 
 #import rospy
 from network import Network
-from param import Param
- 
+from util import ReplayDataset
+
 #import os.path
 import os
 #from sensor_msgs.msg import Image
 
 class Learner:
-    def __init__(self, SESS):
+    def __init__(self, SESS, p):
                      
-        self.p = Param()
+        self.p = p
         self.SESS = SESS
 
         tf.global_variables_initializer()
@@ -26,10 +25,10 @@ class Learner:
         #self.image_pub3 = rospy.Publisher('/interface/scene3', Image, queue_size=1)
         #self.image_pub4 = rospy.Publisher('/interface/scene4', Image, queue_size=1)
                 
-        self.actor = Network()
+        self.actor = Network(self.p)
         self.inputs_, self.model, self.Q, self.loss, self.optimizer = self.actor.createNet()
 
-        self.actor_double = Network()
+        self.actor_double = Network(self.p)
         self.t_inputs_, self.t_model, self.t_Q, self.t_loss, self.t_optimizer = self.actor_double.createNet()
 
         # check existing before load and set loaded or not variable
@@ -38,7 +37,7 @@ class Learner:
         #else :
         #    self.rBuffer = ReplayDataset()
 
-        self.rBuffer = ReplayDataset()
+        self.rBuffer = ReplayDataset(self.p)
         self.load = self.rBuffer.load
 
 

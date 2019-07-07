@@ -5,15 +5,12 @@ import numpy as np
 #from cv_bridge import CvBridge
 #from sensor_msgs.msg import Image
 from random import randint
-from param import Param
 
 class LMazeInterface():
 
-    def __init__(self):
+    def __init__(self, p):
 
-        #rospy.init_node("lmaze_interface")
-
-        self.p = Param()
+        self.p = p
         #self.bridge = CvBridge()
 
         self.reset()

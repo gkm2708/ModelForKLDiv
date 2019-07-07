@@ -6,12 +6,11 @@ from keras.layers.core import Dense
 from keras.layers import Input
 from keras.models import Model
 from keras.optimizers import Adam
-from param import Param
 
 class Network:
     
-    def __init__(self):
-        self.p = Param()
+    def __init__(self, p):
+        self.p = p
         #rospy.loginfo(" Created ")
     
     def createNet(self, NAME='dqn'):        

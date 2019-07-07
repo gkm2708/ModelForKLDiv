@@ -2,7 +2,6 @@
 import numpy as np
 #from cv_bridge import CvBridge
 #from sensor_msgs.msg import Image
-from param import Param
 
 import random
 import h5py
@@ -13,8 +12,8 @@ import os
 
 class ReplayDataset(object):
 
-    def __init__(self, overwrite=False):  
-        self.p = Param()        
+    def __init__(self, p, overwrite=False):  
+        self.p = p        
         self.load = False
         
         self.fp = h5py.File(self.p.BUFFER_FILE, 'a')
@@ -58,7 +57,7 @@ class ReplayDataset(object):
             try:
                 self.state[self.head] = state.reshape(-1)
             except :
-                raise ValueError("Can't add an experience of size %s in replay dataset of size %s" % (state.shape, self.state.size))
+                raise ValueError("Can't add an experience of size %s in replay dataset of size %s" % (state.shape, self.state.len()))
                 #rospy.loginfo(state.shape)
                 #rospy.loginfo(self.head)
                 #rospy.loginfo(self.valid)

@@ -11,35 +11,90 @@ import numpy as np
 import random                               # Handling random number generation
 import os
 import time
+from hyperopt import fmin, tpe, hp, STATUS_OK
 
 
 
 p = Param()
 
+#rospy.init_node("lmaze_interface")
+
 def main():
     
+    space = {
+    'epsilon':      hp.choice('epsilon', [20, 40, 60, 80, 100]),
+    'lr':           hp.choice('lr', [0.1, 0.01, 0.001, 0.0001, 0.00001]),
+    'lr_decay':     hp.choice('lr_decay', [5000, 15000, 25000]),
+    'nn_layer':     hp.choice('nn_layer', [1, 2, 3]),
+    'switch_cycle': hp.choice('switch_cycle', [5, 25, 50]),
+    }
+
+
+    best = fmin(
+    fn=f,
+    space=space,
+    algo=tpe.suggest,
+    max_evals=200
+    )
+
+    print(best)
+
+
+def f(space):
+
+    """ edit p parameters before training starts """    
+    ms = int(time.time())
+        
+    
+    p.DECAY_RATE = 100/(p.MEMORY_SIZE * space['epsilon'])
+
+    p.LEARNING_RATE = space['lr']
+
+    p.DECAY_WINDOW = space['lr_decay']    
+
+    p.NUM_LAYERS = space['nn_layer']
+
+    if p.NUM_LAYERS == 1:
+        p.LAYER_SIZE = [256]
+    elif p.NUM_LAYERS == 2:
+        p.LAYER_SIZE = [256, 128]
+    elif p.NUM_LAYERS == 3:
+        p.LAYER_SIZE = [256, 128, 64]
+
+    p.SWITCH_CYCLE_HALF = space['switch_cycle']
+
+    p.SWITCH_CYCLE = 2*space['switch_cycle']
+
+    p.TB_DIR = p.MODEL_PREFIX+p.RUN_ID+"/"+p.HOSTNAME+"/tensorboard_"+str(ms)
+    
+    p.printParam()
+    """ add some p parameters to guide the tensorboard results into correct area """    
+    
+    return train(ms)
+
+def train(ms):    
     ###########  Create environment, learner, action choices etc....##############
 
     # Build session
-    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+    #sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+    config = tf.ConfigProto(device_count = {'GPU': 0})
+    sess = tf.Session(config = config)
     K.set_session(sess)
 
     # Build Environment
-    lmaze = LMazeInterface()
+    lmaze = LMazeInterface(p)
+        
+    if os.path.exists(p.BUFFER_FILE):
+        os.system('rm '+p.BUFFER_FILE)
 
     # Instantiate the learner
-    learner = Learner(sess)
+    learner = Learner(sess, p)
 
     saver = tf.train.Saver()
 
     loaded = False
 
     # Placeholders and summaries for report
-
-    #tb_step_loss = tf.placeholder(tf.float32, shape=[], name="1_loss")   
-    #tf_step_loss_summary = tf.summary.scalar("1_Step_Loss", tb_step_loss)                   
-    #tb_step_reward = tf.placeholder(tf.float32, shape=[], name="2_reward")
-    #tf_step_reward_summary = tf.summary.scalar('2_Step_Reward', tb_step_reward)
 
     tb_loss0 = tf.placeholder(tf.float32, shape=[], name="3_loss0Per_n_TrainingStepOf_m_BatchSize")
     tb_loss1 = tf.placeholder(tf.float32, shape=[], name="3_loss1Per_n_TrainingStepOf_m_BatchSize")
@@ -64,33 +119,10 @@ def main():
     # Initialize all the tensorflow variables
     sess.run(tf.global_variables_initializer())              
 
-    # check if buffer exists then remove it as it is unusable if not closed properly
-    if os.path.exists(p.BUFFER_FILE):
-        os.system('rm '+p.BUFFER_FILE)
-
-    # check and load model if it exists
-    if os.path.exists("/homes/gkumar/models/"+p.RUN_ID+"/"+p.HOSTNAME+"/model.ckpt.index"):
-        #rospy.loginfo("Staring with loading saved session")
-        saver.restore(sess, "/homes/gkumar/models/"+p.RUN_ID+"/"+p.HOSTNAME+"/model.ckpt")
-        loaded = True
 
     # get a writer for tensorboard data
-    writer = tf.summary.FileWriter("/homes/gkumar/models/"+p.RUN_ID+"/"+p.HOSTNAME+"/tensorboard", sess.graph)        
-
-
-    #rospy.loginfo("Created environment, learner, action choices etc....")
-
-
-
-
-
-
-    
-
-
-
-
-
+    #writer = tf.summary.FileWriter(p.MODEL_PREFIX+p.RUN_ID+"/"+p.HOSTNAME+"/tensorboard", sess.graph)        
+    writer = tf.summary.FileWriter(p.TB_DIR)        
 
 
     """ ################################# Training ############################### """
@@ -175,26 +207,13 @@ def main():
             if (episodeNum % p.WHEN_EVALUATED == 0  ) and episodeNum != 0:
                 BEST_REWARD = testNetRun(sess, writer, episodeNum, lmaze, learner, "train", tf_rewardEval_summary, tb_rewardEval, tf_target_rewardEval_summary, tb_target_rewardEval, loaded, BEST_REWARD, saver)
 
+            if BEST_REWARD == 1.0:
+                return {'status' : STATUS_OK, 'loss' : 0.0}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    elif p.TEST == True :
-        episodeNum = 0
-        _ = testNetRun(sess, writer, episodeNum, lmaze, learner, "test", tf_rewardEval_summary, tb_rewardEval, tf_target_rewardEval_summary, tb_target_rewardEval, loaded, 0.0, saver)
-
-
-
+        BEST_REWARD = testNetRun(sess, writer, episodeNum, lmaze, learner, "train", tf_rewardEval_summary, tb_rewardEval, tf_target_rewardEval_summary, tb_target_rewardEval, loaded, BEST_REWARD, saver)
+        REWARD_LOSS = 1.0-BEST_REWARD
+        
+        return {'status' : STATUS_OK, 'loss' : REWARD_LOSS}
 
 
 
@@ -223,7 +242,9 @@ def PreTrain(lmaze, learner, loaded):
 def testNetRun(sess, writer, episode, lmaze, learner, mode, tf_rewardEval_summary, tb_rewardEval, tf_target_rewardEval_summary, tb_target_rewardEval, loaded, BEST_REWARD, saver):
 
     episodeNum  = 0
-    
+    avg_total_reward = -1.0
+    avg_total_reward1 = -1.0
+
     session_data = []
     while episodeNum < p.HOW_MANY_EVALUATIONS:
         step, episode_data, state, action_sequence = rollout(lmaze, learner, loaded, "test", "0", episodeNum)
@@ -241,19 +262,16 @@ def testNetRun(sess, writer, episode, lmaze, learner, mode, tf_rewardEval_summar
     avg_total_reward1 = np.sum(session_data[:])/float(p.HOW_MANY_EVALUATIONS)
     summary4 = sess.run(tf_target_rewardEval_summary, feed_dict={tb_target_rewardEval: avg_total_reward1})
     writer.add_summary(summary4, episode)
-
-    # save model if previous best performance is supersided
-    if (avg_total_reward > BEST_REWARD or avg_total_reward1 > BEST_REWARD) and mode == "train":
-        if avg_total_reward > BEST_REWARD:
-            BEST_REWARD = avg_total_reward
-        if avg_total_reward1 > BEST_REWARD:
-            BEST_REWARD = avg_total_reward1
-        saver.save(sess, "/homes/gkumar/models/"+p.RUN_ID+"/"+p.HOSTNAME+"/model_Best_"+str(episode)+".ckpt") 
-        os.system('mkdir -p /homes/gkumar/models/'+p.RUN_ID+'/'+p.HOSTNAME+'/best')
-        os.system('mv /homes/gkumar/models/'+p.RUN_ID+'/'+p.HOSTNAME+'/model_Best_'+str(episode)+'.ckpt.* /homes/gkumar/models/'+p.RUN_ID+'/'+p.HOSTNAME+'/best/')
-
-    elif ( episode % p.WHEN_BACKUP == 0 ) and episode != 0:
-        saver.save(sess, "/homes/gkumar/models/"+p.RUN_ID+"/"+p.HOSTNAME+"/model_"+str(episode)+".ckpt") 
+    
+    if (avg_total_reward == 1.0 or avg_total_reward1 == 1.0):
+        saver.save(sess, p.TB_DIR+"/model_Best_"+str(episode)+".ckpt") 
+    
+    if avg_total_reward > BEST_REWARD:
+        BEST_REWARD = avg_total_reward
+    if avg_total_reward1 > BEST_REWARD:
+        BEST_REWARD = avg_total_reward1
+    
+    
     return BEST_REWARD
 
 
@@ -306,18 +324,6 @@ def rollout(lmaze, learner, loaded, mode, decay_step, episodeNum):
         if done or step == p.MAX_STEPS-1:
             episode_data.append((np.asarray(action),reward, None))                        
             step += 1
-            """
-            if p.STEP_PENALTY == True:
-                if mode == "test":
-                    rospy.loginfo("episodeNum : %s, decayStep : %s, step : %s, probability : %s, Reward : %s, stepPenaltyReward : %s, action sequence %s", episodeNum, decay_step, step, probability, np.sum([tup[1] for tup in episode_data]), np.float(np.sum([tup[1] for tup in episode_data]))/np.float(step), action_sequence)
-                else:
-                    rospy.loginfo("episodeNum : %s, decayStep : %s, step : %s, probability : %s, Reward : %s, stepPenaltyReward : %s", episodeNum, decay_step, step, probability, np.sum([tup[1] for tup in episode_data]), np.float(np.sum([tup[1] for tup in episode_data]))/np.float(step))
-            else :
-                if mode == "test":
-                    rospy.loginfo("episodeNum : %s, decayStep : %s, step : %s, probability : %s, Reward : %s, action sequence %s", episodeNum, decay_step, step, probability, np.sum([tup[1] for tup in episode_data]), action_sequence)
-                else:
-                    rospy.loginfo("episodeNum : %s, decayStep : %s, step : %s, probability : %s, Reward : %s", episodeNum, decay_step, step, probability, np.sum([tup[1] for tup in episode_data]))
-            """
             break
         else:
             episode_data.append((np.asarray(action), reward, state))

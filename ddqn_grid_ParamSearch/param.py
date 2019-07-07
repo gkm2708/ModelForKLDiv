@@ -67,12 +67,12 @@ class Param:
         """ varied for param search """
         self.BATCH_SIZE = 64             
         """ varied for param search """
-        self.TRAIN_SIZE = 102
+        self.TRAIN_SIZE = 1
         """ varied for param search """
-        self.PRETRAIN_LENGTH = 50000                    # Number of experiences stored in the Memory when initialized for the first time
+        self.PRETRAIN_LENGTH = 25000                    # Number of experiences stored in the Memory when initialized for the first time
         """ varied for param search """
         self.MEMORY_SIZE     = 250000                   # Number of experiences the Memory can keep
-        self.TRAIN_LENGTH    = 10000000
+        self.TRAIN_LENGTH    = 500000
 
         """ DQN """
         self.WHEN_UPDATE_TARGET = 100
@@ -85,7 +85,7 @@ class Param:
 
         """ HER """
         self.ENDPOINT_AUGMENT = True
-        self.EPISODE_AUGMENT = True
+        self.EPISODE_AUGMENT = False
         self.HER_SAMPLE = 3
 
         """  MISC """
@@ -94,8 +94,8 @@ class Param:
         """ REPORTING PARAMS """
         self.WHEN_BACKUP = 5000
         self.WHEN_SAVED = 5000
-        self.WHEN_EVALUATED = 1000
-        self.HOW_MANY_EVALUATIONS = 100
+        self.WHEN_EVALUATED = 500
+        self.HOW_MANY_EVALUATIONS = 50
         self.WHEN_SAVE_STATS = 100
 
         """ TRAINING CONTROL """
@@ -110,9 +110,11 @@ class Param:
         self.LAYER_SIZE=[256,192,128,64]
         
         """ TRAINING SESSION """
-        self.RUN_ID = "DDQN_GRID_05_July"
-        self.BUFFER_FILE = '/vol/speech/gaurav/datadrive/'+self.HOSTNAME+'/rbuffer.hdf'
-        
+        self.RUN_ID = "DDQN_GRID_PARAMSEARCH_250K_25K"
+        self.BUFFER_PREFIX = "/vol/speech/gaurav/datadrive/"
+        self.MODEL_PREFIX = "/vol/speech/gaurav/paramSearch/"
+        self.BUFFER_FILE = self.BUFFER_PREFIX+self.HOSTNAME+"/rbuffer_"+str(self.MEMORY_SIZE)+"_"+str(self.PRETRAIN_LENGTH)+".hdf"
+        self.TB_DIR = self.MODEL_PREFIX+self.HOSTNAME
         
         self.static_goal_x = 3
         self.static_goal_y = 3
@@ -121,13 +123,12 @@ class Param:
         self.static_start_y = 3
 
         #rospy.loginfo(self.HOSTNAME)
-
-        self.printParam()
+        #self.printParam()
 
     def printParam(self):
     
-        os.system('mkdir -p /homes/gkumar/models/'+self.RUN_ID+'/'+self.HOSTNAME)
-        file = open("/homes/gkumar/models/"+self.RUN_ID+"/"+self.HOSTNAME+"/initParam.txt","w+") 
+        os.system('mkdir -p '+self.TB_DIR)
+        file = open(self.TB_DIR+"/initParam.txt","w+") 
 
         file.write("\n\n GRID WORLD PARAMS\n\n")
         file.write("\n DYNAMICS = "+str(self.DYNAMICS))
@@ -136,14 +137,18 @@ class Param:
         file.write("\n RANDOM_BALL = "+str(self.RANDOM_BALL))
         file.write("\n GRID_SIZE = "+str(self.GRID_SIZE))
 
+
+        file.write("\n\n SENSORY PARAMS\n\n")
+        file.write("\n FRAME_SKIP = "+str(self.FRAME_SKIP))    
+        file.write("\n GYRO_DIM = "+str(self.GYRO_DIM))
+
+
+
         file.write("\n\n ALL INPUT PARAMS\n\n")
         file.write("\n IMAGE_DIM = "+str(self.IMAGE_DIM))
         file.write("\n STATE_SIZE = "+str(self.STATE_SIZE))
         file.write("\n STATE_SHAPE = "+str(self.STATE_SHAPE.shape))
 
-        file.write("\n\n SENSORY PARAMS\n\n")
-        file.write("\n FRAME_SKIP = "+str(self.FRAME_SKIP))    
-        file.write("\n GYRO_DIM = "+str(self.GYRO_DIM))
 
         file.write("\n\n ROLLOUT PARAMS\n\n")
         file.write("\n MAX_STEPS = "+str(self.MAX_STEPS))
@@ -161,7 +166,7 @@ class Param:
         file.write("\n DECAY_EPISODE_INIT = "+str(self.DECAY_EPISODE_INIT))
         file.write("\n EXPLORE_START = "+str(self.EXPLORE_START))
         file.write("\n EXPLORE_STOP = "+str(self.EXPLORE_STOP))
-        file.write("\n DECAY_RATE = "+str(self.DECAY_RATE))
+        file.write("\n DECAY_RATE =True "+str(self.DECAY_RATE))
     
         file.write("\n\n LEARNING RATE PARAMS\n\n")    
         file.write("\n LEARNING_RATE = "+str(self.LEARNING_RATE))
@@ -210,7 +215,11 @@ class Param:
 
         file.write("\n\n TRAINING SESSION\n\n")
         file.write("\n RUN_ID = "+str(self.RUN_ID))
+        file.write("\n BUFFER_PREFIX = "+str(self.BUFFER_PREFIX))
+        file.write("\n MODEL_PREFIX = "+str(self.MODEL_PREFIX))
         file.write("\n BUFFER_FILE = "+str(self.BUFFER_FILE))
+        file.write("\n TB_DIR = "+str(self.TB_DIR))
+
 
         file.write("\n\n SIMULATION SESSION\n\n")
         file.write("\n STATIC GOAL = "+str(self.static_goal_x)+", "+str(self.static_goal_y))
