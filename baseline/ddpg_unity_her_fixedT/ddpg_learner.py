@@ -14,15 +14,7 @@ try:
 except ImportError:
     MPI = None
 
-
-
-
-
-
-
-
-
-
+    
 def normalize(x, stats):
     if stats is None:
         return x
@@ -43,15 +35,6 @@ def reduce_var(x, axis=None, keepdims=False):
     m = tf.reduce_mean(x, axis=axis, keepdims=True)
     devs_squared = tf.square(x - m)
     return tf.reduce_mean(devs_squared, axis=axis, keepdims=keepdims)
-
-
-
-
-
-
-
-
-
 
 
 def get_target_updates(vars, target_vars, tau):
@@ -82,17 +65,6 @@ def get_perturbed_actor_updates(actor, perturbed_actor, param_noise_stddev):
             updates.append(tf.assign(perturbed_var, var))
     assert len(updates) == len(actor.vars)
     return tf.group(*updates)
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -215,8 +187,6 @@ class DDPG(object):
 
 
 
-
-
     def setup_target_network_updates(self):
         actor_init_updates, actor_soft_updates = get_target_updates(self.actor.vars, self.target_actor.vars, self.tau)
         critic_init_updates, critic_soft_updates = get_target_updates(self.critic.vars, self.target_critic.vars, self.tau)
@@ -333,31 +303,6 @@ class DDPG(object):
         self.stats_names = names
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def step(self, obs, apply_noise=True, compute_Q=True):
 
         if self.param_noise is not None and apply_noise:
@@ -392,14 +337,6 @@ class DDPG(object):
         q = None
         action = np.clip(action, self.action_range[0], self.action_range[1])
         return action, q, None, None
-
-
-
-
-
-
-
-
 
 
     def train(self):
@@ -457,36 +394,6 @@ class DDPG(object):
         self.critic_optimizer.update(critic_grads, stepsize=self.critic_lr)
 
         return critic_loss, actor_loss
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     def get_stats(self):
