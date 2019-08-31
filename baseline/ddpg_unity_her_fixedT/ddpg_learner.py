@@ -15,6 +15,14 @@ except ImportError:
     MPI = None
 
 
+
+
+
+
+
+
+
+
 def normalize(x, stats):
     if stats is None:
         return x
@@ -35,6 +43,15 @@ def reduce_var(x, axis=None, keepdims=False):
     m = tf.reduce_mean(x, axis=axis, keepdims=True)
     devs_squared = tf.square(x - m)
     return tf.reduce_mean(devs_squared, axis=axis, keepdims=keepdims)
+
+
+
+
+
+
+
+
+
 
 
 def get_target_updates(vars, target_vars, tau):
@@ -67,19 +84,42 @@ def get_perturbed_actor_updates(actor, perturbed_actor, param_noise_stddev):
     return tf.group(*updates)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 class DDPG(object):
     def __init__(self, actor, critic, memory, observation_shape, action_shape, param_noise=None, action_noise=None,
         gamma=0.99, tau=0.001, normalize_returns=False, enable_popart=False, normalize_observations=True,
         batch_size=128, observation_range=(-5., 5.), action_range=(-1., 1.), return_range=(-np.inf, np.inf),
         critic_l2_reg=0., actor_lr=1e-4, critic_lr=1e-3, clip_norm=None, reward_scale=1.):
+
+        concat_z = np.zeros((observation_shape[0] - 2))
+        z = np.zeros((119))
+
         # Inputs.
         self.obs0 = tf.placeholder(tf.float32, shape=(None,) + observation_shape, name='obs0')
         self.obs1 = tf.placeholder(tf.float32, shape=(None,) + observation_shape, name='obs1')
+
+        self.encoding = tf.placeholder(tf.float32, shape=(None,) + z.shape, name='encoding')
+
         self.terminals1 = tf.placeholder(tf.float32, shape=(None, 1), name='terminals1')
         self.rewards = tf.placeholder(tf.float32, shape=(None, 1), name='rewards')
+
         self.actions = tf.placeholder(tf.float32, shape=(None,) + action_shape, name='actions')
         self.critic_target = tf.placeholder(tf.float32, shape=(None, 1), name='critic_target')
         self.param_noise_stddev = tf.placeholder(tf.float32, shape=(), name='param_noise_stddev')
+
+        self.kls = tf.placeholder(tf.float32, shape=(None, 1), name='kls')
+
 
         # Parameters.
         self.gamma = gamma
@@ -109,10 +149,9 @@ class DDPG(object):
                 self.obs_rms = RunningMeanStd(shape=observation_shape)
         else:
             self.obs_rms = None
-        normalized_obs0 = tf.clip_by_value(normalize(self.obs0, self.obs_rms),
-            self.observation_range[0], self.observation_range[1])
-        normalized_obs1 = tf.clip_by_value(normalize(self.obs1, self.obs_rms),
-            self.observation_range[0], self.observation_range[1])
+
+        self.normalized_obs0 = tf.clip_by_value(normalize(self.obs0, self.obs_rms), self.observation_range[0], self.observation_range[1])
+        self.normalized_obs1 = tf.clip_by_value(normalize(self.obs1, self.obs_rms), self.observation_range[0], self.observation_range[1])
 
         # Return normalization.
         if self.normalize_returns:
@@ -125,22 +164,46 @@ class DDPG(object):
         target_actor = copy(actor)
         target_actor.name = 'target_actor'
         self.target_actor = target_actor
+
+        # Create target networks.
         target_critic = copy(critic)
         target_critic.name = 'target_critic'
         self.target_critic = target_critic
 
         # Create networks and core TF parts that are shared across setup parts.
-        self.actor_tf = actor(normalized_obs0)
-        self.normalized_critic_tf = critic(normalized_obs0, self.actions)
+
+        # obs0
+        self.actor_tf = actor(self.normalized_obs0)
+
+        self.encoder_tf_mu, self.encoder_tf_sigma = actor(self.normalized_obs0, True)
+
+        # Main network based kl for initial state
+        self.kl = tf.reduce_sum(tf.exp(self.encoder_tf_sigma) + tf.square(self.encoder_tf_mu) - 1. - self.encoder_tf_sigma, axis=1)
+
+        self.normalized_critic_tf = critic(self.normalized_obs0, self.encoder_tf_mu, self.actions)
+
+        # only for stats
         self.critic_tf = denormalize(tf.clip_by_value(self.normalized_critic_tf, self.return_range[0], self.return_range[1]), self.ret_rms)
-        self.normalized_critic_with_actor_tf = critic(normalized_obs0, self.actor_tf, reuse=True)
+
+        self.normalized_critic_with_actor_tf = critic(self.normalized_obs0, self.encoder_tf_mu, self.actor_tf, reuse=True)
+
         self.critic_with_actor_tf = denormalize(tf.clip_by_value(self.normalized_critic_with_actor_tf, self.return_range[0], self.return_range[1]), self.ret_rms)
-        Q_obs1 = denormalize(target_critic(normalized_obs1, target_actor(normalized_obs1)), self.ret_rms)
-        self.target_Q = self.rewards + (1. - self.terminals1) * gamma * Q_obs1
+
+        # Target network based kl for initial state
+        self.t0_encoder_tf_mu, self.t0_encoder_tf_sigma = target_actor(self.normalized_obs0, True)
+
+        self.t0_kl = tf.reshape(tf.reduce_sum(tf.exp(self.t0_encoder_tf_sigma) + tf.square(self.t0_encoder_tf_mu) - 1. - self.t0_encoder_tf_sigma, axis=1),(-1,1))
+
+        # obs1
+        self.t_encoder_tf_mu, self.t_encoder_tf_sigma = target_actor(self.normalized_obs1, True)
+
+        Q_obs1 = denormalize(target_critic(self.normalized_obs1, self.t_encoder_tf_mu, self.target_actor(self.normalized_obs1)), self.ret_rms)
+
+        self.target_Q = self.rewards + 0.5 * self.kls + (1. - self.terminals1) * gamma * Q_obs1
 
         # Set up parts.
         if self.param_noise is not None:
-            self.setup_param_noise(normalized_obs0)
+            self.setup_param_noise(self.normalized_obs0)
         self.setup_actor_optimizer()
         self.setup_critic_optimizer()
         if self.normalize_returns and self.enable_popart:
@@ -149,6 +212,10 @@ class DDPG(object):
         self.setup_target_network_updates()
 
         self.initial_state = None # recurrent architectures not supported yet
+
+
+
+
 
     def setup_target_network_updates(self):
         actor_init_updates, actor_soft_updates = get_target_updates(self.actor.vars, self.target_actor.vars, self.tau)
@@ -175,36 +242,40 @@ class DDPG(object):
 
     def setup_actor_optimizer(self):
         logger.info('setting up actor optimizer')
-        self.actor_loss = -tf.reduce_mean(self.critic_with_actor_tf)
+
+        self.actor_loss = -tf.reduce_mean(self.critic_with_actor_tf) + U.flatgrad(self.kl, self.actor.trainable_vars, clip_norm=self.clip_norm)
+
         actor_shapes = [var.get_shape().as_list() for var in self.actor.trainable_vars]
         actor_nb_params = sum([reduce(lambda x, y: x * y, shape) for shape in actor_shapes])
         logger.info('  actor shapes: {}'.format(actor_shapes))
         logger.info('  actor params: {}'.format(actor_nb_params))
+
         self.actor_grads = U.flatgrad(self.actor_loss, self.actor.trainable_vars, clip_norm=self.clip_norm)
-        self.actor_optimizer = MpiAdam(var_list=self.actor.trainable_vars,
-            beta1=0.9, beta2=0.999, epsilon=1e-08)
+        self.actor_optimizer = MpiAdam(var_list=self.actor.trainable_vars, beta1=0.9, beta2=0.999, epsilon=1e-08)
 
     def setup_critic_optimizer(self):
+
         logger.info('setting up critic optimizer')
+
         normalized_critic_target_tf = tf.clip_by_value(normalize(self.critic_target, self.ret_rms), self.return_range[0], self.return_range[1])
+
         self.critic_loss = tf.reduce_mean(tf.square(self.normalized_critic_tf - normalized_critic_target_tf))
+
         if self.critic_l2_reg > 0.:
             critic_reg_vars = [var for var in self.critic.trainable_vars if var.name.endswith('/w:0') and 'output' not in var.name]
             for var in critic_reg_vars:
                 logger.info('  regularizing: {}'.format(var.name))
             logger.info('  applying l2 regularization with {}'.format(self.critic_l2_reg))
-            critic_reg = tc.layers.apply_regularization(
-                tc.layers.l2_regularizer(self.critic_l2_reg),
-                weights_list=critic_reg_vars
-            )
+            critic_reg = tc.layers.apply_regularization(tc.layers.l2_regularizer(self.critic_l2_reg), weights_list=critic_reg_vars)
             self.critic_loss += critic_reg
+
         critic_shapes = [var.get_shape().as_list() for var in self.critic.trainable_vars]
         critic_nb_params = sum([reduce(lambda x, y: x * y, shape) for shape in critic_shapes])
         logger.info('  critic shapes: {}'.format(critic_shapes))
         logger.info('  critic params: {}'.format(critic_nb_params))
+
         self.critic_grads = U.flatgrad(self.critic_loss, self.critic.trainable_vars, clip_norm=self.clip_norm)
-        self.critic_optimizer = MpiAdam(var_list=self.critic.trainable_vars,
-            beta1=0.9, beta2=0.999, epsilon=1e-08)
+        self.critic_optimizer = MpiAdam(var_list=self.critic.trainable_vars, beta1=0.9, beta2=0.999, epsilon=1e-08)
 
     def setup_popart(self):
         # See https://arxiv.org/pdf/1602.07714.pdf for details.
@@ -214,6 +285,7 @@ class DDPG(object):
         new_mean = self.ret_rms.mean
 
         self.renormalize_Q_outputs_op = []
+
         for vs in [self.critic.output_vars, self.target_critic.output_vars]:
             assert len(vs) == 2
             M, b = vs
@@ -260,12 +332,40 @@ class DDPG(object):
         self.stats_ops = ops
         self.stats_names = names
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def step(self, obs, apply_noise=True, compute_Q=True):
 
         if self.param_noise is not None and apply_noise:
             actor_tf = self.perturbed_actor_tf
         else:
             actor_tf = self.actor_tf
+
+        # find z here as first thing
 
         feed_dict = {self.obs0: U.adjust_shape(self.obs0, [obs])}
 
@@ -293,67 +393,101 @@ class DDPG(object):
         action = np.clip(action, self.action_range[0], self.action_range[1])
         return action, q, None, None
 
-    def store_transition(self, obs0, action, reward, obs1, terminal1):
-        reward *= self.reward_scale
-        B = obs0.shape[0]
-        for b in range(B):
-            self.memory.append(obs0[b], action[b], reward[b], obs1[b], terminal1[b])
-            if self.normalize_observations:
-                self.obs_rms.update(np.array([obs0[b]]))
+
+
+
+
+
+
+
+
 
     def train(self):
         # Get a batch.
         batch = self.memory.sample(batch_size=self.batch_size)
 
         if self.normalize_returns and self.enable_popart:
-            old_mean, old_std, target_Q = self.sess.run([self.ret_rms.mean, self.ret_rms.std, self.target_Q], feed_dict={
-                self.obs1: batch['obs1'],
-                self.rewards: batch['rewards'],
-                self.terminals1: batch['terminals1'].astype('float32'),
-            })
+
+            old_mean, old_std, target_Q = self.sess.run([self.ret_rms.mean,
+                                                         self.ret_rms.std,
+                                                         self.target_Q],
+                                                        feed_dict={ self.obs1: batch['obs1'],
+                                                                    self.rewards: batch['rewards'],
+                                                                    self.terminals1: batch['terminals1'].astype('float32'), })
+
             self.ret_rms.update(target_Q.flatten())
-            self.sess.run(self.renormalize_Q_outputs_op, feed_dict={
-                self.old_std : np.array([old_std]),
-                self.old_mean : np.array([old_mean]),
-            })
+
+            self.sess.run(self.renormalize_Q_outputs_op,
+                          feed_dict={ self.old_std : np.array([old_std]),
+                                      self.old_mean : np.array([old_mean]), })
 
             # Run sanity check. Disabled by default since it slows down things considerably.
             print('running sanity check')
-            target_Q_new, new_mean, new_std = self.sess.run([self.target_Q, self.ret_rms.mean, self.ret_rms.std], feed_dict={
-                 self.obs1: batch['obs1'],
-                 self.rewards: batch['rewards'],
-                 self.terminals1: batch['terminals1'].astype('float32'),
-             })
+
+            target_Q_new, new_mean, new_std = self.sess.run([self.target_Q,
+                                                             self.ret_rms.mean,
+                                                             self.ret_rms.std],
+                                                            feed_dict={ self.obs1: batch['obs1'],
+                                                                        self.rewards: batch['rewards'],
+                                                                        self.terminals1: batch['terminals1'].astype('float32'), })
+
             print(target_Q_new, target_Q, new_mean, new_std)
+
             assert (np.abs(target_Q - target_Q_new) < 1e-3).all()
+
         else:
-            target_Q = self.sess.run(self.target_Q, feed_dict={
-                self.obs1: batch['obs1'],
-                self.rewards: batch['rewards'],
-                self.terminals1: batch['terminals1'].astype('float32'),
-            })
+            t0_kl = self.sess.run(self.t0_kl, feed_dict={self.obs0: batch['obs0'],})
+
+            target_Q = self.sess.run(self.target_Q,
+                                     feed_dict={ self.obs1: batch['obs1'],
+                                                 self.rewards: batch['rewards'],
+                                                 self.terminals1: batch['terminals1'].astype('float32'),
+                                                 self.kls: t0_kl,})
 
         # Get all gradients and perform a synced update.
-        ops = [self.actor_grads, self.actor_loss, self.critic_grads, self.critic_loss]
-        actor_grads, actor_loss, critic_grads, critic_loss = self.sess.run(ops, feed_dict={
-            self.obs0: batch['obs0'],
-            self.actions: batch['actions'],
-            self.critic_target: target_Q,
-        })
+        actor_grads, actor_loss, critic_grads, critic_loss = self.sess.run([self.actor_grads,
+                                                                            self.actor_loss,
+                                                                            self.critic_grads,
+                                                                            self.critic_loss],
+                                                                           feed_dict={
+                                                                               self.obs0: batch['obs0'],
+                                                                               self.actions: batch['actions'],
+                                                                               self.critic_target: target_Q,})
         self.actor_optimizer.update(actor_grads, stepsize=self.actor_lr)
         self.critic_optimizer.update(critic_grads, stepsize=self.critic_lr)
 
         return critic_loss, actor_loss
 
-    def initialize(self, sess):
-        self.sess = sess
-        self.sess.run(tf.global_variables_initializer())
-        self.actor_optimizer.sync()
-        self.critic_optimizer.sync()
-        self.sess.run(self.target_init_updates)
 
-    def update_target_net(self):
-        self.sess.run(self.target_soft_updates)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_stats(self):
         if self.stats_sample is None:
@@ -386,12 +520,11 @@ class DDPG(object):
         # Perturb a separate copy of the policy to adjust the scale for the next "real" perturbation.
         batch = self.memory.sample(batch_size=self.batch_size)
         self.sess.run(self.perturb_adaptive_policy_ops, feed_dict={
-            self.param_noise_stddev: self.param_noise.current_stddev,
-        })
+            self.param_noise_stddev: self.param_noise.current_stddev,})
+
         distance = self.sess.run(self.adaptive_policy_distance, feed_dict={
             self.obs0: batch['obs0'],
-            self.param_noise_stddev: self.param_noise.current_stddev,
-        })
+            self.param_noise_stddev: self.param_noise.current_stddev,})
 
         if MPI is not None:
             mean_distance = MPI.COMM_WORLD.allreduce(distance, op=MPI.SUM) / MPI.COMM_WORLD.Get_size()
@@ -407,8 +540,7 @@ class DDPG(object):
             self.action_noise.reset()
         if self.param_noise is not None:
             self.sess.run(self.perturb_policy_ops, feed_dict={
-                self.param_noise_stddev: self.param_noise.current_stddev,
-            })
+                self.param_noise_stddev: self.param_noise.current_stddev,})
 
     def save(self, save_path):
         U.save_variables(save_path, None , self.sess)
@@ -420,3 +552,21 @@ class DDPG(object):
         self.actor_optimizer.sync()
         self.critic_optimizer.sync()
         self.sess.run(self.target_init_updates)
+
+    def store_transition(self, obs0, action, reward, obs1, terminal1):
+        reward *= self.reward_scale
+        B = obs0.shape[0]
+        for b in range(B):
+            self.memory.append(obs0[b], action[b], reward[b], obs1[b], terminal1[b])
+            if self.normalize_observations:
+                self.obs_rms.update(np.array([obs0[b]]))
+
+    def initialize(self, sess):
+        self.sess = sess
+        self.sess.run(tf.global_variables_initializer())
+        self.actor_optimizer.sync()
+        self.critic_optimizer.sync()
+        self.sess.run(self.target_init_updates)
+
+    def update_target_net(self):
+        self.sess.run(self.target_soft_updates)

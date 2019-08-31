@@ -65,8 +65,6 @@ def learn(network,
     train = True
     test = False
 
-    temp = np.zeros((12*12+18))
-
     if env_type == 'UnityEnvironment':
         default_brain = env.brain_names[0]
         brain = env.brains[default_brain]
@@ -80,16 +78,11 @@ def learn(network,
 
         nb_actions = actions_template.size
 
-        # make all spaces here
-        memory = Memory(limit=int(1e6), action_shape=actions_template.shape,
-                        observation_shape=observations_template.shape)
-    else:
-        nb_actions = env.action_space.shape[-1]
-        assert (np.abs(env.action_space.low) == env.action_space.high).all()  # we assume symmetric actions.
-        memory = Memory(limit=int(10000), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
+        memory = Memory(limit=int(1e6), action_shape=actions_template.shape, observation_shape=observations_template.shape)
 
     critic = Critic(network=network, **network_kwargs)
     actor = Actor(nb_actions, network=network, **network_kwargs)
+    # +++++++++++++ enc +++++++++++++++++ # create encoder network here
 
     action_noise = None
     param_noise = None
@@ -112,36 +105,17 @@ def learn(network,
 
     if env_type == 'UnityEnvironment':
         max_action = 1
-    else:
-        max_action = env.action_space.high
 
     logger.info('scaling actions by {} before executing in env'.format(max_action))
 
     if env_type == 'UnityEnvironment':
+
+        # +++++++++++++ enc +++++++++++++++++ # pass encoder network here
         agent = DDPG(actor,
                      critic,
                      memory,
                      observations_template.shape,
                      actions_template.shape,
-                     gamma=gamma,
-                     tau=tau,
-                     normalize_returns=normalize_returns,
-                     normalize_observations=normalize_observations,
-                     batch_size=batch_size,
-                     action_noise=action_noise,
-                     param_noise=param_noise,
-                     critic_l2_reg=critic_l2_reg,
-                     actor_lr=actor_lr,
-                     critic_lr=critic_lr,
-                     enable_popart=popart,
-                     clip_norm=clip_norm,
-                     reward_scale=reward_scale)
-    else:
-        agent = DDPG(actor,
-                     critic,
-                     memory,
-                     temp.shape,
-                     env.action_space.shape,
                      gamma=gamma,
                      tau=tau,
                      normalize_returns=normalize_returns,
@@ -178,29 +152,23 @@ def learn(network,
 
         p_image = enqueue(brain_obs.visual_observations[0])
 
-        tempf1 = brain_obs.vector_observations[0][0:4]
-        tempf2 = brain_obs.vector_observations[0][6:10]
-        tempf3 = brain_obs.vector_observations[0][12:16]
-        tempf4 = brain_obs.vector_observations[0][18:24]
-
         obs = np.concatenate([np.reshape(p_image, (-1)),
-                              np.reshape(tempf1, (-1)),
-                              np.reshape(tempf2, (-1)),
-                              np.reshape(tempf3, (-1)),
-                              np.reshape(tempf4, (-1))], axis=0)
+                              np.reshape(brain_obs.vector_observations[0][0:4], (-1)),
+                              np.reshape(brain_obs.vector_observations[0][6:10], (-1)),
+                              np.reshape(brain_obs.vector_observations[0][12:16], (-1)),
+                              np.reshape(brain_obs.vector_observations[0][18:24], (-1))], axis=0)
+
+        # +++++++++++++ enc +++++++++++++++++ # call encoder to create z value here
+        # +++++++++++++ enc +++++++++++++++++ # add z value to obs here
 
         obs = np.expand_dims(obs, axis=0)
 
-    else:
-        obs = env.reset()
 
     if eval_env is not None:
         eval_obs = eval_env.reset()
 
     if env_type == 'UnityEnvironment':
         nenvs = 1
-    else:
-        nenvs = obs.shape[0]
 
     episode_reward = np.zeros(nenvs, dtype = np.float32)        # vector
     episode_step = np.zeros(nenvs, dtype = int)                 # vector
@@ -246,33 +214,19 @@ def learn(network,
 
                     p_image = enqueue(brain_obs_new.visual_observations[0])
 
-                    tempf1 = brain_obs_new.vector_observations[0][0:4]
-                    tempf2 = brain_obs_new.vector_observations[0][6:10]
-                    tempf3 = brain_obs_new.vector_observations[0][12:16]
-                    tempf4 = brain_obs_new.vector_observations[0][18:24]
-
                     new_obs = np.concatenate([np.reshape(p_image, (-1)),
-                                            np.reshape(tempf1, (-1)),
-                                            np.reshape(tempf2, (-1)),
-                                            np.reshape(tempf3, (-1)),
-                                            np.reshape(tempf4, (-1))], axis=0)
+                                            np.reshape(brain_obs_new.vector_observations[0][0:4], (-1)),
+                                            np.reshape(brain_obs_new.vector_observations[0][6:10], (-1)),
+                                            np.reshape(brain_obs_new.vector_observations[0][12:16], (-1)),
+                                            np.reshape(brain_obs_new.vector_observations[0][18:24], (-1))], axis=0)
 
+                    # +++++++++++++ enc +++++++++++++++++ # call encoder to create z value here
+                    # +++++++++++++ enc +++++++++++++++++ # add z value to obs here
                     new_obs = np.expand_dims(new_obs, axis=0)
 
                     r = brain_obs_new.rewards[0]
                     done = brain_obs_new.local_done[0]
                     info = ""
-
-                else:
-                    if train == True:
-                        action, q, _, _ = agent.step(obs, apply_noise=True, compute_Q=True)
-                    if test == True:
-                        action, q, _, _ = agent.learnt_step(obs)
-
-                    # Execute next action.
-                    if rank == 0 and render:
-                        env.render()
-                    new_obs, r, done, info = env.step(max_action * action)
 
                 # note these outputs are batched from vecenv
                 t += 1
@@ -290,9 +244,8 @@ def learn(network,
                     action = np.asarray(action)
                     r = np.expand_dims(np.expand_dims(np.asarray(r), axis=0), axis=0)
                     done = np.expand_dims(np.expand_dims(np.asarray(done), axis=0), axis=0)
-                    agent.store_transition(obs, action, r, new_obs, done) #the batched data will be unrolled in memory.py's append.
 
-                else:
+                    # +++++++++++++++++++++ SIMPLE EXPERIENCE REPLAY ++++++++++++++++++++++++++++++++
                     agent.store_transition(obs, action, r, new_obs, done) #the batched data will be unrolled in memory.py's append.
 
                 if train == True:
@@ -303,6 +256,7 @@ def learn(network,
                 for d in range(len(done)):
                     if done[d]:
                         # Episode done.
+                        # ++++++++++++++++++ Episode Summary ++++++++++++++++++
                         episode_end_result.append(r[0][0])
 
                         epoch_episode_rewards.append(episode_reward[d])
@@ -312,48 +266,22 @@ def learn(network,
                         episode_step[d] = 0
                         epoch_episodes += 1
                         episodes += 1
+                        # ------------------ Episode Summary ------------------
 
-                        if train == True:
-                            replacement_goal = episode_data[len(episode_data)-1][0][d][160:162]
 
-                            for x in range(0, len(episode_data) - 2):
-                                temp1 = np.asarray(episode_data[x][0][d][0:160])
-                                temp2 = np.asarray(episode_data[x][3][d][0:160])
-                                obs = np.concatenate((temp1, replacement_goal), axis=0)
-                                obs_new = np.concatenate((temp2, replacement_goal), axis=0)
-
-                                agent.store_transition(np.expand_dims(obs, axis=0),
-                                                   np.expand_dims(episode_data[x][1][d], axis=0),
-                                                   np.expand_dims(episode_data[x][2][d], axis=0),
-                                                   np.expand_dims(obs_new, axis=0),
-                                                   np.expand_dims(episode_data[x][4][d], axis=0))
-
-                            temp1 = np.asarray(episode_data[len(episode_data)-1][0][d][0:160])
-                            temp2 = np.asarray(episode_data[len(episode_data)-1][3][d][0:160])
-
-                            obs = np.concatenate((temp1, replacement_goal), axis=0)
-                            obs_new = np.concatenate((temp2, replacement_goal), axis=0)
-
-                            agent.store_transition(np.expand_dims(obs, axis=0),
-                                               np.expand_dims(episode_data[len(episode_data)-1][1][d], axis=0),
-                                               np.expand_dims([0.0], axis=0),
-                                               np.expand_dims(obs_new, axis=0),
-                                               np.expand_dims(episode_data[len(episode_data)-1][4][d], axis=0))
+                        # ++++++++++++++++++++++++++++++++++ HER EXPERIENCE REPLAY ++++++++++++++++++++++++++++++++++++
+                        her(train, episode_data, agent, d)
+                        # --------------------------------------- HER ---------------------------------------
 
                         if nenvs == 1:
                             brain_obs = env.reset(train_mode=True)[default_brain]
                             p_image = enqueue(brain_obs.visual_observations[0])
 
-                            tempf1 = brain_obs.vector_observations[0][0:4]
-                            tempf2 = brain_obs.vector_observations[0][6:10]
-                            tempf3 = brain_obs.vector_observations[0][12:16]
-                            tempf4 = brain_obs.vector_observations[0][18:24]
-
                             obs = np.concatenate([np.reshape(p_image, (-1)),
-                                                  np.reshape(tempf1, (-1)),
-                                                  np.reshape(tempf2, (-1)),
-                                                  np.reshape(tempf3, (-1)),
-                                                  np.reshape(tempf4, (-1))], axis=0)
+                                                  np.reshape(brain_obs.vector_observations[0][0:4], (-1)),
+                                                  np.reshape(brain_obs.vector_observations[0][6:10], (-1)),
+                                                  np.reshape(brain_obs.vector_observations[0][12:16], (-1)),
+                                                  np.reshape(brain_obs.vector_observations[0][18:24], (-1))], axis=0)
                             obs = np.expand_dims(obs, axis=0)
                             agent.reset()
 
@@ -484,9 +412,47 @@ def learn(network,
 
 
 def enqueue(cv_image):
-    value = np.zeros((12,12), dtype=np.float)
-    for x in range(0, 12):
-        for y in range(0, 12):
-            if x == 0 or x == 11 or y == 0 or y == 11:
-                value[x, y] = 1.0
+    #value = np.zeros((11,11), dtype=np.float)
+
+    value = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+             [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+             [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
+             [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+             [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+             [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+             [0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0],
+             [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
     return value
+
+
+def her(train, episode_data, agent, d):
+    if train:
+        replacement_goal = episode_data[len(episode_data) - 1][0][d][137:139]
+
+        for x in range(0, len(episode_data) - 2):
+            temp1 = np.asarray(episode_data[x][0][d][0:137])
+            temp2 = np.asarray(episode_data[x][3][d][0:137])
+            obs = np.concatenate((temp1, replacement_goal), axis=0)
+            obs_new = np.concatenate((temp2, replacement_goal), axis=0)
+
+            agent.store_transition(np.expand_dims(obs, axis=0),
+                                   np.expand_dims(episode_data[x][1][d], axis=0),
+                                   np.expand_dims(episode_data[x][2][d], axis=0),
+                                   np.expand_dims(obs_new, axis=0),
+                                   np.expand_dims(episode_data[x][4][d], axis=0))
+
+        temp1 = np.asarray(episode_data[len(episode_data) - 1][0][d][0:137])
+        temp2 = np.asarray(episode_data[len(episode_data) - 1][3][d][0:137])
+
+        obs = np.concatenate((temp1, replacement_goal), axis=0)
+        obs_new = np.concatenate((temp2, replacement_goal), axis=0)
+
+        agent.store_transition(np.expand_dims(obs, axis=0),
+                               np.expand_dims(episode_data[len(episode_data) - 1][1][d], axis=0),
+                               np.expand_dims([0.0], axis=0),
+                               np.expand_dims(obs_new, axis=0),
+                               np.expand_dims(episode_data[len(episode_data) - 1][4][d], axis=0))
