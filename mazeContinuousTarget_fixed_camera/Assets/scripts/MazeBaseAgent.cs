@@ -20,7 +20,6 @@ public class MazeBaseAgent : Agent
 	void Start()
     {
 
-
 		Maze = new int[,]{{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 			{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 			{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -90,6 +89,7 @@ public class MazeBaseAgent : Agent
 			{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 
+		/*
 
 		// first create the base board
 
@@ -111,7 +111,8 @@ public class MazeBaseAgent : Agent
 			}
 		}
 
-
+		*/
+		/*
 		// Random ball position in feasible space
 		int ball_x = UnityEngine.Random.Range(1, 67);
 		int ball_y = UnityEngine.Random.Range(1, 67);
@@ -133,6 +134,10 @@ public class MazeBaseAgent : Agent
 		}
 			
 		Target.position = new Vector3 (-33.0f + ball_x, 0.05f, -33.0f + ball_y);
+		*/
+		 
+		Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
+		Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
     }
 
 
@@ -146,6 +151,7 @@ public class MazeBaseAgent : Agent
 		this.transform.rotation = new Quaternion (0, 0, 0, 1);
 
 
+		/*
 		// Random ball position in feasible space
 		int ball_x = UnityEngine.Random.Range(1, 67);
 		int ball_y = UnityEngine.Random.Range(1, 67);
@@ -167,6 +173,11 @@ public class MazeBaseAgent : Agent
 		}
 
 		Target.position = new Vector3 (-33.0f + ball_x, 0.05f, -33.0f + ball_y);
+		*/
+
+		Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
+		Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
+
 
 		CollectObservations ();
 	}
@@ -198,10 +209,13 @@ public class MazeBaseAgent : Agent
 
 	public override void AgentAction(float[] vectorAction, string textAction){
 
-		Vector3 BallTransform = Ball.transform.position;
+		//Vector3 BallTransform = Ball.transform.position;
 
-		var actionZ = 2f * Mathf.Clamp(vectorAction[0], -1f, 1f);
-		var actionX = 2f * Mathf.Clamp(vectorAction[1], -1f, 1f);
+		var actionZ = vectorAction[0];
+		var actionX = vectorAction[1];
+
+		//var actionZ = 2f * Mathf.Clamp(vectorAction[0], -1f, 1f);
+		//var actionX = 2f * Mathf.Clamp(vectorAction[1], -1f, 1f);
 
 		if ((gameObject.transform.rotation.z < 0.25f && actionZ > 0f) ||
 			(gameObject.transform.rotation.z > -0.25f && actionZ < 0f)) {
