@@ -147,8 +147,9 @@ public class MazeBaseAgent : Agent
 
 
 	public override void AgentReset(){
-		this.transform.position = new Vector3 (0, 0, 0);
-		this.transform.rotation = new Quaternion (0, 0, 0, 1);
+		
+		gameObject.transform.position = new Vector3 (0, 0, 0);
+		gameObject.transform.rotation = new Quaternion (0.1f, 0, 0.1f, 1);
 
 
 		/*
@@ -177,7 +178,8 @@ public class MazeBaseAgent : Agent
 
 		Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
 		Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
-
+		//Ball.GetComponent<Rigidbody>().AddForce(0, 0, 0);
+		Ball.GetComponent<Rigidbody>().velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
 		CollectObservations ();
 	}
@@ -199,6 +201,11 @@ public class MazeBaseAgent : Agent
 
 		AddVectorObs (Target.position.x);
 		AddVectorObs (Target.position.z);
+
+		AddVectorObs (Ball.GetComponent<Rigidbody>().velocity.x);
+		AddVectorObs (Ball.GetComponent<Rigidbody>().velocity.z);
+
+		//Debug.Log (Ball.GetComponent<Rigidbody> ().velocity.x);
 	}
 
 
@@ -211,11 +218,25 @@ public class MazeBaseAgent : Agent
 
 		//Vector3 BallTransform = Ball.transform.position;
 
+		//Ball.GetComponent<Rigidbody>().AddForce(vectorAction[2], 0, vectorAction[3]);
+
+
+		Ball.GetComponent<Rigidbody>().velocity = new Vector3(vectorAction[2], 0.0f, vectorAction[3]);
+
 		var actionZ = vectorAction[0];
 		var actionX = vectorAction[1];
 
+		//Debug.Log (actionZ);
+		//Debug.Log (actionX);
+
 		//var actionZ = 2f * Mathf.Clamp(vectorAction[0], -1f, 1f);
 		//var actionX = 2f * Mathf.Clamp(vectorAction[1], -1f, 1f);
+
+		if ((gameObject.transform.rotation.x < 0.25f && actionX > 0f) ||
+			(gameObject.transform.rotation.x > -0.25f && actionX < 0f)) {
+
+			gameObject.transform.Rotate(new Vector3(1, 0, 0), actionX);
+		}
 
 		if ((gameObject.transform.rotation.z < 0.25f && actionZ > 0f) ||
 			(gameObject.transform.rotation.z > -0.25f && actionZ < 0f)) {
@@ -223,11 +244,7 @@ public class MazeBaseAgent : Agent
 			gameObject.transform.Rotate(new Vector3(0, 0, 1), actionZ);
 		}
 
-		if ((gameObject.transform.rotation.x < 0.25f && actionX > 0f) ||
-			(gameObject.transform.rotation.x > -0.25f && actionX < 0f)) {
-
-			gameObject.transform.Rotate(new Vector3(1, 0, 0), actionX);
-		}
+		//Debug.Log (gameObject.transform.rotation);
 
 		/*
 		// moving ball to next position
