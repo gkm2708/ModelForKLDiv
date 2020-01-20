@@ -342,18 +342,6 @@ ScriptsOnlyBuild:
     className: TMP_InputField
   - hash:
       serializedVersion: 2
-      Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
-    assemblyName: UnityEngine.Advertisements.dll
-    namespaceName: UnityEngine.Advertisements
-    className: CallbackExecutor
-  - hash:
-      serializedVersion: 2
-      Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
-    assemblyName: UnityEngine.Advertisements.dll
-    namespaceName: UnityEngine.Advertisements.Editor
-    className: Placeholder
-  - hash:
-      serializedVersion: 2
       Hash: 7b5256f68510a0a5146034bfc7f117f8
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
@@ -1032,7 +1020,7 @@ ScriptsOnlyBuild:
     className: CameraFollow
   - hash:
       serializedVersion: 2
-      Hash: 622485fd90d8325bab0e6edb2d14f9ae
+      Hash: d6d22fb8f4181f6bf14f1713c4fb3bb8
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: MazeBaseAgent
@@ -1153,4 +1141,4 @@ ScriptsOnlyBuild:
   platform: 24
   scenePathNames:
   - Assets/Scenes/SampleScene.unity
-  playerPath: /home/gaurav/MySharedRepository/mazeContinuousTarget_fixed_camera/Build/mazeContinuousTarget_fixed_camera.x86_64
+  playerPath: /homes/gkumar/Documents/UnityProjects/mazeContinuousTarget_fixed_camera/Build/mazeContinuousTarget_fixed_camera_blank_board_2dimact.x86_64

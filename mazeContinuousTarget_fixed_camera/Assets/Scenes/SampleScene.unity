@@ -317,7 +317,7 @@ Transform:
   m_LocalScale: {x: 0.01, y: 0.010000001, z: 0.01}
   m_Children: []
   m_Father: {fileID: 1327900266}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
 GameObject:
@@ -462,8 +462,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 118.3
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 50
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -487,11 +487,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 35, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 350, z: 0}
+  m_LocalScale: {x: 0.014925374, y: 0.014925381, z: 10}
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_Father: {fileID: 1327900266}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &1119179349
 GameObject:
@@ -647,6 +647,7 @@ Transform:
   m_LocalScale: {x: 67, y: 0.1, z: 67}
   m_Children:
   - {fileID: 705507995}
+  - {fileID: 963194228}
   - {fileID: 531658801}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -689,5 +690,4 @@ MonoBehaviour:
     onDemandDecision: 0
     numberOfActionsBetweenDecisions: 1
   Ball: {fileID: 158031785}
-  Target: {fileID: 531658801}
-  speed: 0.01
+  Goal: {fileID: 531658797}

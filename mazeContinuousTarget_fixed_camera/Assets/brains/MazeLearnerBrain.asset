@@ -15,7 +15,7 @@ MonoBehaviour:
   brainParameters:
     vectorObservationSize: 8
     numStackedVectorObservations: 1
-    vectorActionSize: 04000000
+    vectorActionSize: 02000000
     cameraResolutions:
     - width: 670
       height: 670
@@ -23,8 +23,6 @@ MonoBehaviour:
     vectorActionDescriptions:
     - alpha_dot
     - beta_dot
-    - x_dot
-    - "y_dot\x13\x13\x13\x13\x13"
     vectorActionSpaceType: 1
   model: {fileID: 0}
   inferenceDevice: 0

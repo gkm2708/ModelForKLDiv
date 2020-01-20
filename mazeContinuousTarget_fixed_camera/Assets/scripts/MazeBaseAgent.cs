@@ -8,9 +8,12 @@ public class MazeBaseAgent : Agent
     // Start is called before the first frame update
 
 	public GameObject Ball;
-	public Transform Target;
+	public GameObject Goal;
+	//public Transform Target;
 
 	public int[,] Maze;
+
+	public float y_pos = 0.6f;
 
 	private GameObject wall;
 	private GameObject temp; 
@@ -113,16 +116,8 @@ public class MazeBaseAgent : Agent
 
 		*/
 		/*
-		// Random ball position in feasible space
-		int ball_x = UnityEngine.Random.Range(1, 67);
-		int ball_y = UnityEngine.Random.Range(1, 67);
-
-		while (Maze [ball_x, ball_y] == 0) {
-			ball_x = UnityEngine.Random.Range(1, 67);
-			ball_y = UnityEngine.Random.Range(1, 67);
-		}
-			
-		Ball.transform.position = new Vector3 (-33.0f + ball_x, 0.55f, -33.0f + ball_y);
+		int ball_x = 0;
+		int ball_y = 0;
 
 		// Random ball position in feasible space
 		ball_x = UnityEngine.Random.Range(1, 67);
@@ -133,11 +128,26 @@ public class MazeBaseAgent : Agent
 			ball_y = UnityEngine.Random.Range(1, 67);
 		}
 			
-		Target.position = new Vector3 (-33.0f + ball_x, 0.05f, -33.0f + ball_y);
+		Ball.transform.position = new Vector3 (-33.0f + ball_x, y_pos, -33.0f + ball_y);
+
+		// Random ball position in feasible space
+		ball_x = UnityEngine.Random.Range(1, 67);
+		ball_y = UnityEngine.Random.Range(1, 67);
+
+		while (Maze [ball_x, ball_y] == 0) {
+			ball_x = UnityEngine.Random.Range(1, 67);
+			ball_y = UnityEngine.Random.Range(1, 67);
+		}
+			
+
+		Goal.transform.position = new Vector3 (-33.0f + ball_x , y_pos, -33.0f + ball_y);
+		//Goal.transform.parent = gameObject.transform;
+				 
+		Ball.GetComponent<Rigidbody>().AddForce(0, 0, 0);
+		Ball.GetComponent<Rigidbody>().velocity = new Vector3(0.0f, 0.0f, 0.0f);
 		*/
-		 
-		Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
-		Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
+		//Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
+		//Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
     }
 
 
@@ -151,18 +161,22 @@ public class MazeBaseAgent : Agent
 		gameObject.transform.position = new Vector3 (0, 0, 0);
 		gameObject.transform.rotation = new Quaternion (0.1f, 0, 0.1f, 1);
 
+		//Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
+		//Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
 
-		/*
+		int ball_x = 0;
+		int ball_y = 0;
+
 		// Random ball position in feasible space
-		int ball_x = UnityEngine.Random.Range(1, 67);
-		int ball_y = UnityEngine.Random.Range(1, 67);
+		ball_x = UnityEngine.Random.Range(1, 67);
+		ball_y = UnityEngine.Random.Range(1, 67);
 
 		while (Maze [ball_x, ball_y] == 0) {
 			ball_x = UnityEngine.Random.Range(1, 67);
 			ball_y = UnityEngine.Random.Range(1, 67);
 		}
 
-		Ball.transform.position = new Vector3 (-33.0f + ball_x, 0.55f, -33.0f + ball_y);
+		Ball.transform.position = new Vector3 (-33.0f + ball_x, y_pos, -33.0f + ball_y);
 
 		// Random ball position in feasible space
 		ball_x = UnityEngine.Random.Range(1, 67);
@@ -173,15 +187,17 @@ public class MazeBaseAgent : Agent
 			ball_y = UnityEngine.Random.Range(1, 67);
 		}
 
-		Target.position = new Vector3 (-33.0f + ball_x, 0.05f, -33.0f + ball_y);
-		*/
+		Goal.transform.position = new Vector3 (-33.0f + ball_x, y_pos, -33.0f + ball_y);
 
-		Ball.transform.position = new Vector3 (0.0f, 0.55f, 0.0f);
-		Target.position = new Vector3 (0.0f, 0.05f, 0.0f);
-		//Ball.GetComponent<Rigidbody>().AddForce(0, 0, 0);
+		Ball.GetComponent<Rigidbody>().AddForce(0, 0, 0);
 		Ball.GetComponent<Rigidbody>().velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
-		CollectObservations ();
+
+		Debug.Log (Ball.transform.position);
+		Debug.Log (Goal.transform.position);
+
+
+		//CollectObservations ();
 	}
 
 
@@ -199,8 +215,8 @@ public class MazeBaseAgent : Agent
 		AddVectorObs (Ball.transform.position.x);
 		AddVectorObs (Ball.transform.position.z);
 
-		AddVectorObs (Target.position.x);
-		AddVectorObs (Target.position.z);
+		AddVectorObs (Goal.transform.position.x);
+		AddVectorObs (Goal.transform.position.z);
 
 		AddVectorObs (Ball.GetComponent<Rigidbody>().velocity.x);
 		AddVectorObs (Ball.GetComponent<Rigidbody>().velocity.z);
@@ -209,19 +225,11 @@ public class MazeBaseAgent : Agent
 	}
 
 
-
-
-
-	public float speed = 0.1f;
-
 	public override void AgentAction(float[] vectorAction, string textAction){
 
 		//Vector3 BallTransform = Ball.transform.position;
-
 		//Ball.GetComponent<Rigidbody>().AddForce(vectorAction[2], 0, vectorAction[3]);
-
-
-		Ball.GetComponent<Rigidbody>().velocity = new Vector3(vectorAction[2], 0.0f, vectorAction[3]);
+		//Ball.GetComponent<Rigidbody>().velocity = new Vector3(vectorAction[2], 0.0f, vectorAction[3]);
 
 		var actionZ = vectorAction[0];
 		var actionX = vectorAction[1];
