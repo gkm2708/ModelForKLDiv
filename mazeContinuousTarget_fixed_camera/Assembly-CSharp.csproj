@@ -168,9 +168,11 @@
      <Compile Include="Assets\ML-Agents\Scripts\Startup.cs" />
      <Compile Include="Assets\ML-Agents\Scripts\UnityAgentsException.cs" />
      <Compile Include="Assets\ML-Agents\Scripts\Utilities.cs" />
+     <Compile Include="Assets\scripts\BallTracker.cs" />
      <Compile Include="Assets\scripts\bottomCollider.cs" />
      <Compile Include="Assets\scripts\colider.cs" />
      <Compile Include="Assets\scripts\GameAcademy.cs" />
+     <Compile Include="Assets\scripts\GoalTracker.cs" />
      <Compile Include="Assets\scripts\leftCollider.cs" />
      <Compile Include="Assets\scripts\MazeBaseAgent.cs" />
      <Compile Include="Assets\scripts\rightCollider.cs" />

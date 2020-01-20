@@ -21,7 +21,7 @@ MonoBehaviour:
   m_ShowMode: 4
   m_Title: 
   m_RootView: {fileID: 2}
-  m_MinSize: {x: 950, y: 544}
+  m_MinSize: {x: 950, y: 394}
   m_MaxSize: {x: 10000, y: 10000}
 --- !u!114 &2
 MonoBehaviour:
@@ -111,10 +111,10 @@ MonoBehaviour:
     y: 30
     width: 1920
     height: 1070
-  m_MinSize: {x: 681, y: 494}
-  m_MaxSize: {x: 14004, y: 14044}
+  m_MinSize: {x: 681, y: 344}
+  m_MaxSize: {x: 12006, y: 8044}
   vertical: 0
-  controlID: 98
+  controlID: 33
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -136,10 +136,10 @@ MonoBehaviour:
     y: 0
     width: 1504
     height: 1070
-  m_MinSize: {x: 404, y: 494}
-  m_MaxSize: {x: 10002, y: 14044}
+  m_MinSize: {x: 406, y: 344}
+  m_MaxSize: {x: 8006, y: 8044}
   vertical: 1
-  controlID: 99
+  controlID: 34
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -161,10 +161,10 @@ MonoBehaviour:
     y: 0
     width: 1504
     height: 620
-  m_MinSize: {x: 404, y: 222}
-  m_MaxSize: {x: 8004, y: 4022}
+  m_MinSize: {x: 406, y: 222}
+  m_MaxSize: {x: 8006, y: 4022}
   vertical: 0
-  controlID: 100
+  controlID: 35
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -210,8 +210,8 @@ MonoBehaviour:
     y: 0
     width: 1202
     height: 620
-  m_MinSize: {x: 200, y: 200}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 204, y: 222}
+  m_MaxSize: {x: 4004, y: 4022}
   m_ActualView: {fileID: 12}
   m_Panes:
   - {fileID: 12}
@@ -238,14 +238,14 @@ MonoBehaviour:
     y: 620
     width: 1504
     height: 450
-  m_MinSize: {x: 232, y: 272}
-  m_MaxSize: {x: 10002, y: 10022}
-  m_ActualView: {fileID: 16}
+  m_MinSize: {x: 102, y: 122}
+  m_MaxSize: {x: 4002, y: 4022}
+  m_ActualView: {fileID: 17}
   m_Panes:
   - {fileID: 16}
   - {fileID: 17}
-  m_Selected: 0
-  m_LastSelected: 1
+  m_Selected: 1
+  m_LastSelected: 0
 --- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -265,8 +265,8 @@ MonoBehaviour:
     y: 0
     width: 416
     height: 1070
-  m_MinSize: {x: 277, y: 72}
-  m_MaxSize: {x: 4002, y: 4022}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -308,9 +308,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 0, y: 0.0002500005, z: 0}
+    m_Target: {x: 1, y: 0.55, z: 1}
     speed: 2
-    m_Value: {x: 0, y: 0.0002500005, z: 0}
+    m_Value: {x: 1, y: 0.55, z: 1}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -343,9 +343,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 1, z: 0, w: 0}
   m_Size:
-    m_Target: 156.3414
+    m_Target: 22
     speed: 2
-    m_Value: 156.3414
+    m_Value: 22
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -401,18 +401,18 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 829affffb29affff249cffff429dffff729dffffe49effff2aa0ffff5aa0ffffcca1ffff5ca3ffff8ca3fffffea4ffff50a7ffff80a7fffff2a8ffff56b3ffff8ab3ffff94b3fffff6b9ffff26baffff30baffffcebbfffffebbffff70bdffffc4c1fffff4c1ffff66c3ffff5cc4ffff8cc4fffffec5ffff48c7ffff78c7ffffeac8ffffc0d2fffff0d2ffff62d4ffffe2dcffff12ddffff84deffff4ee1ffff82e1fffff4e2ffffe2e5ffff12e6ffff84e7ffff78f8ffffa8f8ffff1efaffff6afbffffc23200004035000014360000b637000098390000343b0000083c0000163d0000ee3d0000
+      m_ExpandedIDs: 74d3ffffa4d3ffff16d5ffff0ed6ffff3ed6ffffb0d7ffffc0d8fffff0d8ffff62daffff62dbffff92dbffff04ddffffdcddffff0cdeffff7edfffffdce0ffff0ce1ffff7ee2ffffdee5ffff0ee6ffff80e7ffffcae8fffffae8ffff6ceafffff0ebffff20ecffff92edffff9aeeffffcaeeffff3cf0ffffa4f1ffffd4f1ffff46f3ffff2ef4ffff5ef4ffff68f4ffff72f5ffffa2f5ffff14f7ffff54f8ffff84f8fffffaf9ffff8efbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
-        m_Name: MazeBase
-        m_OriginalName: MazeBase
+        m_Name: Academy
+        m_OriginalName: Academy
         m_EditFieldRect:
           serializedVersion: 2
           x: 0
           y: 0
           width: 0
           height: 0
-        m_UserData: 16060
+        m_UserData: 13720
         m_IsWaitingForDelay: 0
         m_IsRenaming: 0
         m_OriginalEventType: 0
@@ -570,19 +570,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/brains
+    - Assets/scripts
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/brains
+  - Assets/scripts
   m_LastFoldersGridSize: -1
   m_LastProjectPath: /homes/gkumar/Documents/UnityProjects/mazeContinuousTarget_fixed_camera
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: b02e0000
-    m_LastClickedID: 11952
+    m_SelectedIDs: 522e0000
+    m_LastClickedID: 11858
     m_ExpandedIDs: 00000000f22a000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
