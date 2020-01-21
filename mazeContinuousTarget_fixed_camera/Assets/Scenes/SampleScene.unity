@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.43667564, g: 0.48427194, b: 0.5645252, a: 1}
+  m_IndirectSpecularColor: {r: 0.43667555, g: 0.4842717, b: 0.56452394, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 158031786}
   - component: {fileID: 158031790}
   - component: {fileID: 158031791}
+  - component: {fileID: 158031792}
   m_Layer: 0
   m_Name: Ball
   m_TagString: Untagged
@@ -241,6 +242,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1b26feef93487d5db73b1cec250a52d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &158031792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158031785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7630440bcf9e3aed3b4d31de0650834a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &531658797
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,6 +267,7 @@ GameObject:
   - component: {fileID: 531658799}
   - component: {fileID: 531658798}
   - component: {fileID: 531658803}
+  - component: {fileID: 531658802}
   m_Layer: 0
   m_Name: Goal
   m_TagString: Untagged
@@ -333,6 +347,18 @@ Transform:
   m_Father: {fileID: 1327900266}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &531658802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 531658797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5564bb24a603e73aa60aeea6697dec1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &531658803
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -690,7 +716,7 @@ Rigidbody:
   m_AngularDrag: 0.05
   m_UseGravity: 1
   m_IsKinematic: 1
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 46
   m_CollisionDetection: 0
 --- !u!114 &1327900268

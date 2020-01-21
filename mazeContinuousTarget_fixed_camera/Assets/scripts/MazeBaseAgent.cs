@@ -19,8 +19,14 @@ public class MazeBaseAgent : Agent
 	public float delta_rot_x;
 	public float delta_rot_z;
 
+	public float actionX;
+	public float actionZ;
+
 	private GameObject wall;
 	private GameObject temp; 
+
+	public Rigidbody m_Rigidbody;
+	public Vector3 m_EulerAngleVelocity;
 
 	private colider script; // this will be the container of the script
 
@@ -224,10 +230,39 @@ public class MazeBaseAgent : Agent
 	}
 
 
+	void FixedUpdate()
+	{
+		Debug.Log ("FixedUpdate");
+
+		//Quaternion deltaRotation = Quaternion.Euler(m_EulerAngleVelocity * Time.deltaTime);
+		//m_Rigidbody.MoveRotation(m_Rigidbody.rotation * deltaRotation);
+	}
+
+
+	void Update()
+	{
+
+		//if (actionX != gameObject.transform.eulerAngles.x && actionZ != gameObject.transform.eulerAngles.z) {
+		m_EulerAngleVelocity = new Vector3 ((actionX - gameObject.transform.eulerAngles.x) / 10, 0, (actionZ - gameObject.transform.eulerAngles.z)/10);
+		//} else {
+		//m_EulerAngleVelocity = new Vector3 (0, 0, 0);
+		//}
+		m_Rigidbody = gameObject.GetComponent<Rigidbody>();
+
+		Quaternion deltaRotation = Quaternion.Euler(m_EulerAngleVelocity * Time.deltaTime);
+		m_Rigidbody.MoveRotation(m_Rigidbody.rotation * deltaRotation);
+		Debug.Log ("Update");
+	}
+
+	void OnUpdate(){
+		Debug.Log ("OnUpdate");
+	}
+
 	void OnGUI() {
-		GUI.Label (new Rect (200, 8, 240, 160), "Angular Rotation: " + gameObject.transform.eulerAngles);
-		GUI.Label (new Rect (200, 40, 240, 160), "Angular Velocity: " + gameObject.GetComponent<Rigidbody>().angularVelocity);
-		GUI.Label (new Rect (200, 72, 240, 160), "Delta Rotation: " + delta_rot_x +" "+ delta_rot_z);
+		GUI.Label (new Rect (200, 5, 240, 160), "Angular Rotation: " + gameObject.transform.eulerAngles);
+		GUI.Label (new Rect (200, 30, 240, 160), "Angular Velocity: " + gameObject.GetComponent<Rigidbody>().angularVelocity);
+		GUI.Label (new Rect (200, 55, 240, 160), "action Received: " + actionX +" "+ actionZ);
+		GUI.Label (new Rect (200, 80, 240, 160), "Delta Rotation: " + m_EulerAngleVelocity);
 	}
 
 	/*
@@ -258,7 +293,7 @@ public class MazeBaseAgent : Agent
 
 
 
-		gameObject.GetComponent<Rigidbody>().angularVelocity = new Vector3(delta_rot_x/10, 0.0f, delta_rot_z/10);
+		//gameObject.GetComponent<Rigidbody>().angularVelocity = new Vector3(delta_rot_x/10, 0.0f, delta_rot_z/10);
 
 		//var actionZ = 2f * Mathf.Clamp(vectorAction[0], -1f, 1f);
 		//var actionX = 2f * Mathf.Clamp(vectorAction[1], -1f, 1f);
@@ -276,14 +311,15 @@ public class MazeBaseAgent : Agent
 			gameObject.transform.Rotate(new Vector3(0, 0, 1), actionZ);
 		}
 
+
 		//Debug.Log (gameObject.transform.rotation);
 
 		// moving ball to next position
 		int x_pos = (int)(-36.0f + vectorAction[0]); 
 		int y_pos = (int)(36.0f - vectorAction[1]);
 
-		Debug.Log (x_pos);
-		Debug.Log (y_pos);
+		//Debug.Log (x_pos);
+		//Debug.Log (y_pos);
 
 		SetReward (0.0f);
 
@@ -301,8 +337,8 @@ public class MazeBaseAgent : Agent
 		//var actionX = 2f * Mathf.Clamp(vectorAction[1], -1f, 1f);
 
 		// desired rotation
-		var actionZ = vectorAction[0];
-		var actionX = vectorAction[1];
+		actionZ = vectorAction[0];
+		actionX = vectorAction[1];
 
 		// current rotation
 		float current_rot_x = gameObject.transform.eulerAngles.x;
@@ -315,31 +351,32 @@ public class MazeBaseAgent : Agent
 
 		//gameObject.GetComponent<Rigidbody>().angularVelocity = new Vector3((float)delta_rot_x/10, 0.0f, (float)delta_rot_z/10);
 
-
-		if ((-5.25f < gameObject.transform.eulerAngles.z && 
-			gameObject.transform.eulerAngles.z < 5.25f)) {
+		/*
+		if ((-5.0f < gameObject.transform.eulerAngles.z && 
+			gameObject.transform.eulerAngles.z < 5.0f)) {
 
 			gameObject.transform.Rotate(new Vector3(0, 0, 1), actionZ);
 
-		} else if ((-5.25f > gameObject.transform.eulerAngles.z && actionZ > 0.0f) ||
-			(5.25f < gameObject.transform.eulerAngles.z && actionZ < 0.0f)) {
+		} else if ((-5.0f > gameObject.transform.eulerAngles.z && actionZ > 0.0f) ||
+			(5.0f < gameObject.transform.eulerAngles.z && actionZ < 0.0f)) {
 
 			gameObject.transform.Rotate(new Vector3(0, 0, 1), actionZ);
 		
 		}
 
 
-		if ((-5.25f < gameObject.transform.eulerAngles.x && 
-			gameObject.transform.eulerAngles.x < 5.25f)) {
+		if ((-5.0f < gameObject.transform.eulerAngles.x && 
+			gameObject.transform.eulerAngles.x < 5.0f)) {
 
 			gameObject.transform.Rotate(new Vector3(1, 0, 0), actionX);
 
-		} else if ((-5.25f > gameObject.transform.eulerAngles.x && actionX > 0.0f) ||
-			(5.25f < gameObject.transform.eulerAngles.x && actionX < 0.0f)) {
+		} else if ((-5.0f > gameObject.transform.eulerAngles.x && actionX > 0.0f) ||
+			(5.0f < gameObject.transform.eulerAngles.x && actionX < 0.0f)) {
 
 			gameObject.transform.Rotate(new Vector3(1, 0, 0), actionX);
 
 		}
+		*/
 
 
 		float distanceToTarget = Vector3.Distance (Ball.transform.position, Goal.transform.position);
