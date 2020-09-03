@@ -1,4 +1,4 @@
-# MySharedRepository
+# ModelForKLDiv
 
 Inspired by information-theoritic approaches, we wanted to use KL-div for the identification on decision states in continuous case.
 
